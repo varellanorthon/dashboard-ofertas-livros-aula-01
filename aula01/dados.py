@@ -78,8 +78,6 @@ def ler_livro_mais_caro(livros):
     return preco_max, nome_livro
         
 
-
-
 if __name__ == "__main__":
     livros = ler_livros()
     print(f"A quantidade de livros da coleção é de {len(livros)}")
