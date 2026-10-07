@@ -62,8 +62,16 @@ def main():
     col4.metric("Livro mais caro", f"£{mais_caro["preco"]}")
     col4.caption(mais_caro["titulo"])
 
-    st.dataframe(tabela)
-
-
+    busca = st.text_input(label="Buscar por título", type="search")
+    livros_encontrados = dados.buscar_livros(livros, busca)
+    qntd_livros_encontrados = len(livros_encontrados)
+    
+    if len(livros_encontrados) == 0: 
+        st.warning("Nenhum livro encontrado. 😢")
+    else:
+        tabela = montar_tabela(livros_encontrados)
+        st.caption(f"{qntd_livros_encontrados} livros encontrados.")
+        st.dataframe(tabela)
+        
 if __name__ == "__main__":
     main()

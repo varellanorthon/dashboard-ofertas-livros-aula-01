@@ -57,9 +57,11 @@ def encontrar_mais_caro(livros):
             mais_caro = livro
     return mais_caro
 
+
 def converter_preco(preco):
     """Converte um preço do site em número: "£51.77" -> 51.77"""
     return float(preco.replace("£", ""))
+
 
 def converter_nota(nota):
     """Converte a nota escrita em inglês em número: "Three" -> 3"""
@@ -73,6 +75,7 @@ def converter_nota(nota):
         return 2
     else:
         return 1
+
 
 def preparar_livros(linhas):
     """Recebe as linhas lidas do CSV e devolve os livros com preço e nota em número."""
@@ -89,12 +92,29 @@ def preparar_livros(linhas):
 
     return livros
 
+
 def carregar_livros():
     """Lê o CSV e já devolve os livros prontos para usar."""
     return preparar_livros(ler_livros())
 
 
+def buscar_livros(livros, titulo):
+    """Busca os livros que possuem a string buscada pelo user no seu título."""
+    livros_encontrados = []
+    for livro in livros:
+        if titulo.lower() in livro["titulo"].lower():
+            livros_encontrados.append(livro)
+    return livros_encontrados
+
+        
 if __name__ == "__main__":
     livros = ler_livros()
     print(f"{len(livros)} livros carregados")
     print("Primeiro livro:", livros[0])
+    livro = input("informe o livro: ")
+    livros_encontrados = buscar_livros(livros, livro)
+    print(livros_encontrados)
+    
+
+    
+
