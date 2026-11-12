@@ -7,6 +7,7 @@ import streamlit as st
 
 import dados
 
+STATUS = ["Quero ler", "Lendo", "Lido"]
 
 def calcular_preco_medio(livros):
     """Soma os preços de todos os livros e divide pelo total."""
@@ -81,6 +82,15 @@ def listar_categorias(livros):
     categorias.sort()
     return categorias
 
+def listar_titulos(livros):
+    """Devolve as categorias dos livros, sem repetição e em ordem alfabética."""
+    titulo = []
+    for livro in livros:
+        if livro["titulo"] not in titulo:
+            titulo.append(livro["titulo"])
+    titulo.sort()
+    return titulo
+
 
 def filtrar_por_categoria(livros, categoria):
     """Devolve só os livros da categoria escolhida. Com "Todas", devolve todos."""
@@ -92,13 +102,35 @@ def filtrar_por_categoria(livros, categoria):
             resultado.append(livro)
     return resultado
 
+def encontrar_livro(livros, titulo):
+    """Devolve o primeiro livro com esse título."""
+    for livro in livros:
+        if livro["titulo"] == titulo:
+            return livro
 
-def main():
-    st.set_page_config(page_title="Dashboard de Livros", page_icon="📚", layout="wide")
-    st.title("📚 Dashboard de Livros")
+def somar_favoritos(favoritos):
+    """Soma o preço de todos os favoritos."""
+    total = 0
+    for favorito in favoritos.values():
+        total = total + favorito["preco"]
+    return total
 
-    livros = dados.carregar_livros()
+def montar_tabela_favoritos(favoritos):
+    """Prepara as linhas da tabela de favoritos."""
+    tabela = []
+    for titulo, favorito in favoritos.items():
+        linha = {
+            "Título": titulo,
+            "Preço": f"£ {favorito['preco']:.2f}",
+            "Status": favorito["status"],
+            "Comentário": favorito["comentario"],
+        }
+        tabela.append(linha)
+    return tabela
 
+
+def mostrar_catalogo(livros):
+    
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("Total de livros", len(livros))
     col2.metric("Preço médio", f"£{round(calcular_preco_medio(livros), 2)}")
@@ -121,6 +153,56 @@ def main():
     else:
         st.caption(f"{len(encontrados)} livros encontrados")
         st.dataframe(montar_tabela(encontrados), hide_index=True, width="stretch")
+        titulo = st.selectbox("Escolha um livro", listar_titulos(encontrados))
+        if st.button(" Adicionar aos favoritos"):
+            favoritos = dados.carregar_favoritos()
+            if titulo in favoritos:
+                st.warning("Esse livro já está nos favoritos.")
+            else:
+                dados.salvar_favorito(encontrar_livro(encontrados, titulo))
+                st.success("Livro adicionado!")
+
+
+def mostrar_favoritos():
+    """Mostra os favoritos salvos."""
+    favoritos = dados.carregar_favoritos()
+    if len(favoritos) == 0:
+        st.info("Nenhum favorito ainda.")
+        return
+    col1, col2 = st.columns(2)
+    col1.metric("Favoritos", len(favoritos))
+    col2.metric("Total", f"£ {somar_favoritos(favoritos):.2f}")
+    st.dataframe(montar_tabela_favoritos(favoritos), hide_index=True, width="stretch")
+    
+    titulo = st.selectbox("Escolha um favorito", list(favoritos.keys()))
+    favorito = favoritos[titulo]
+
+    status = st.selectbox("Status", STATUS, index=STATUS.index(favorito["status"]))
+    comentario = st.text_input("Comentário", favorito["comentario"])
+    
+    if st.button(" Salvar alterações"):
+        favorito.update({"status": status, "comentario": comentario})
+        dados.gravar_favoritos(favoritos)
+        st.rerun()
+    if st.button("🗑 Remover"):
+        del favoritos[titulo]
+        dados.gravar_favoritos(favoritos)
+        st.rerun()
+
+
+def main():
+    st.set_page_config(page_title="Dashboard de Livros", page_icon="📚", layout="wide")
+    st.title("📚 Dashboard de Livros")
+    
+    livros = dados.carregar_livros()
+
+    aba_catalogo, aba_favoritos = st.tabs(["Catálogo", " Favoritos"])
+    
+    with aba_catalogo:
+        mostrar_catalogo(livros)
+    with aba_favoritos:
+        mostrar_favoritos()
+   
 
 
 if __name__ == "__main__":
